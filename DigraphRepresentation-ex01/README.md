@@ -3,6 +3,8 @@
 **Eduardo Lemos Paschoalini**\
 **[Github](https://github.com/EduLemos0)**
 
+## Rode o arquivo em JAVA
+
 ## Técnica Utilizada
 
 Diante as técnicas apresentadas durante as aulas, escolhi construir a lista de adjacência por vetores, dado que a implementação de estruturas de dados adicionais e.g. linked lists - nas quais a seriam utilizadas na representação de lista de adjacência tradicional - não são necessárias, pois toda a estruturação é feita via vetores.
