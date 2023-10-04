@@ -1,73 +1,102 @@
-//  @author - Eduardo Lemos
-//  @lemosep on GitHub
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <cstdint>
 #include <vector>
+#include <stack>
+#include <algorithm>
 using namespace std;
 
 class Graph {
+
 public:
-    uint32_t size{};
+    uint32_t size;
     vector<vector<uint32_t>> adj;
 
-    Graph() = default;
-
-    explicit Graph(uint32_t s) {
-        size = s;
-        adj.resize(s);
-    }
+    explicit Graph(uint32_t s) : size(s), adj(s) {}
 };
 
 class Depth_First_Search {
 public:
-    static Graph graph;
-    static int32_t time;
-    static vector<uint32_t> discovery_time;
-    static vector<uint32_t> end_time;
-    static vector<uint32_t> parent;
+    Graph graph;
+    uint32_t selected_vertex;
+    vector<uint32_t> discovery_time;
+    vector<uint32_t> end_time;
+    vector<uint32_t> parent;
+    vector<string> tree_edges;
+    vector<string> selected_edges;
+    vector<string> classification;
 
-    Depth_First_Search(Graph& g, uint32_t root)
-    {
-        graph = g;
+    Depth_First_Search(Graph& g, uint32_t r) : graph(g), selected_vertex(r) {
         discovery_time.resize(graph.size);
         end_time.resize(graph.size);
         parent.resize(graph.size);
-        init(root);
-    };
-
-private:
-    static auto init (uint32_t root) -> void
-    {
-        for (uint32_t i = 1; i < graph.size; ++i) {
-            discovery_time.at(i) = 0;
-            end_time.at(i) = 0;
-            parent.at(i) = 0;
-        };
-
-        for (const auto& v : graph.adj.at(root)) {
-            if (discovery_time.at(v) == 0) { DepthFirstSearch(v); };
-        }
-
+        Build_DFS();
+        Write_Data();
     }
 
-    static auto DepthFirstSearch(uint32_t v) -> void {
-        time++;
-        discovery_time.at(v) = time;
+private:
+    auto Build_DFS() -> void {
+        uint32_t time = 0;
+        stack<uint32_t> vertex_stack;
+        // Always push 1, since root is 1.
+        vertex_stack.push(1);
 
-        for (const auto& w : graph.adj.at(v)) {
-            if (discovery_time.at(w) == 0) {
-                //write source & destination edge in string separated by '\n'
+        while (!vertex_stack.empty()) {
+            uint32_t v = vertex_stack.top();
+            // Stops redundant data
+            if (discovery_time[v] == 0) {
+                time += 1;
+                discovery_time[v] = time;
+            }
+
+            for (const auto& w : graph.adj[v]) {
+                string current_edge = "(" + to_string(v) + "-" + to_string(w) + ")";
+
+                if (discovery_time[w] == 0) {
+                    tree_edges.push_back(current_edge);
+                    parent[w] = v;
+
+                    if (v == selected_vertex) {
+                        selected_edges.push_back(current_edge);
+                        classification.emplace_back("arvore");
+                    }
+
+                    vertex_stack.push(w);
+                    break;
+                }
+                else if (v == selected_vertex && find(selected_edges.begin(), selected_edges.end(), current_edge) == selected_edges.end()) {
+                    {
+                        selected_edges.push_back(current_edge);
+                        classification.emplace_back( end_time[w] == 0 ? "retorno" : discovery_time[v] < discovery_time[w] ? "avanco"
+                                                                                                     : "cruzamento");
+                    }
+                }
+
+                if (w == graph.adj[v][graph.adj[v].size() - 1]) {
+                    time += 1;
+                    end_time[v] = time;
+                    vertex_stack.pop();
+                }
             }
         }
     }
+    
+    auto Write_Data() -> void
+    {
+        cout << "----------------------------------\nARESTAS ARVORE\n";
+        for (const auto & tree_edge : tree_edges) {
+            cout << tree_edge << " ";
+        }
 
-
+        cout << "\n----------------------------------\nARESTAS DIVERGENTES DE " + to_string(selected_vertex) + "\n";
+        for (int i = 0; i < selected_edges.size(); ++i) {
+            cout << selected_edges[i] << "->" << classification[i] << '\n';
+        }
+    }
 };
 
-auto main() -> int
-{
+auto main() -> int {
     bool debug = true;
     // **WARNING** -> Make sure you pass in the correct @file_path.
     string file_path;
@@ -75,7 +104,7 @@ auto main() -> int
     cin >> file_path;
 
     uint32_t root = 0;
-    cout << "Select a root node\n";
+    cout << "Select vertex\n";
     cin >> root;
 
     ifstream file (file_path);
@@ -98,8 +127,12 @@ auto main() -> int
         graph.adj.at(e_src).push_back(e_dest);
     }
 
+    // Sorting vertices
+    for (uint32_t i = 0; i < graph.size; ++i) {
+        sort(graph.adj.at(i).begin(), graph.adj.at(i).end());
+    }
+
     Depth_First_Search dfs(graph, root);
+
+    return 0;
 }
-
-//C:\Users\user\CLionProjects\untitled\graph.txt
-
